@@ -30,7 +30,7 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
-
+#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -164,7 +164,7 @@ static void processOrder ()
     usleep((unsigned int) floor ((MAXCOOK * random ()) / RAND_MAX + 100.0));
 
     //TODO insert your code here
-     verifySemError(semDown(semgid, sh->waiterRequestPossible), 1, 0);
+    verifySemError(semDown(semgid, sh->waiterRequestPossible), 1, 0);
     // fim insert
     
     if (semDown (semgid, sh->mutex) == -1) {                                                      /* enter critical region */
