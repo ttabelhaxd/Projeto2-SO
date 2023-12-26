@@ -31,6 +31,7 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
+#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -336,7 +337,7 @@ static void checkOutAtReception (int id)
     saveState(nFic, &sh->fSt);
 
     sh->fSt.receptionistRequest.reqType = BILLREQ;
-    sh->fSt.receptionistRequest.reqGroup = id;
+    sh->fSt.receptionistRequest.reqGroup = id;                      /* (semSharedMemRecptionist) param should be groupid */
     
     verifySemError(semUp(semgid, sh->receptionistReq), 0, 1);
 
