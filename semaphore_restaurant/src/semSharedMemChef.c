@@ -136,8 +136,9 @@ static void waitForOrder ()
     }
 
     //TODO insert your code here
+
     lastGroup = sh->fSt.foodGroup;
-    sh->fSt.st.chefStat = COOK;
+    sh->fSt.st.chefStat = WAIT_FOR_ORDER;
     saveState(nFic, &sh->fSt);
 
     verifySemError(semUp(semgid, sh->orderReceived), 0, 0);
@@ -174,12 +175,15 @@ static void processOrder ()
     }
 
     //TODO insert your code here
+    sh->fSt.st.chefStat = COOK;
+    saveState(nFic, &sh->fSt);
+
     sh->fSt.waiterRequest.reqType = FOODREADY;
     sh->fSt.waiterRequest.reqGroup = lastGroup;
 
     verifySemError(semUp(semgid, sh->waiterRequest), 0, 0);
 
-    sh->fSt.st.chefStat = WAIT_FOR_ORDER;
+    sh->fSt.st.chefStat = REST;
     saveState(nFic, &sh->fSt);
     // fim insert
 
