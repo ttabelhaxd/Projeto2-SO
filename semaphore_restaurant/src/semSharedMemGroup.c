@@ -31,7 +31,6 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
-#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -190,7 +189,10 @@ static void eat (int id)
 static void checkInAtReception(int id)
 {
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->receptionistRequestPossible), 1, 1);
+    if (semDown (semgid, sh->receptionistRequestPossible) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
@@ -204,7 +206,6 @@ static void checkInAtReception(int id)
 
     sh->fSt.receptionistRequest.reqType = TABLEREQ;
     sh->fSt.receptionistRequest.reqGroup = id;
-    verifySemError(semUp(semgid, sh->receptionistReq), 0, 1);
     // fim insert   
 
     if (semUp (semgid, sh->mutex) == -1) {                                                      /* exit critical region */
@@ -213,7 +214,15 @@ static void checkInAtReception(int id)
     }
 
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->waitForTable[id]), 1, 1);
+    if (semUp (semgid, sh->receptionistReq) == -1) {                                                      /* exit critical region */
+        perror ("error on the up operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
+
+    if (semDown (semgid, sh->waitForTable[id]) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
 }
@@ -232,7 +241,11 @@ static void orderFood (int id)
 {
     // TODO insert your code here
     int table;
-    verifySemError(semDown(semgid, sh->waiterRequestPossible), 1, 1);
+
+    if (semDown (semgid, sh->waiterRequestPossible) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
@@ -246,17 +259,25 @@ static void orderFood (int id)
 
     sh->fSt.waiterRequest.reqType = FOODREQ;
     sh->fSt.waiterRequest.reqGroup = id;
-    verifySemError(semUp(semgid, sh->waiterRequest), 0, 1);
+
+    if (semUp (semgid, sh->waiterRequest) == -1) {                                                     /* exit critical region */
+        perror ("error on the up operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
 
     table = sh->fSt.assignedTable[id];
-    // fim insert ---
+    // fim insert
+    
     if (semUp (semgid, sh->mutex) == -1) {                                                     /* exit critical region */
         perror ("error on the up operation for semaphore access (CT)");
         exit (EXIT_FAILURE);
     }
 
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->requestReceived[table]), 1, 1);
+    if (semDown (semgid, sh->requestReceived[table]) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 }
 
@@ -281,6 +302,7 @@ static void waitFood (int id)
     // TODO insert your code here
     sh->fSt.st.groupStat[id] = WAIT_FOR_FOOD;
     saveState(nFic, &sh->fSt);
+
     table = sh->fSt.assignedTable[id];
     // fim insert
 
@@ -290,7 +312,10 @@ static void waitFood (int id)
     }
 
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->foodArrived[table]), 1, 1);
+    if (semDown (semgid, sh->foodArrived[table]) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
@@ -322,9 +347,13 @@ static void waitFood (int id)
  */
 static void checkOutAtReception (int id)
 {   
-    int table;
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->receptionistRequestPossible), 1, 1);
+    int table;
+
+    if (semDown (semgid, sh->receptionistRequestPossible) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */
@@ -337,9 +366,12 @@ static void checkOutAtReception (int id)
     saveState(nFic, &sh->fSt);
 
     sh->fSt.receptionistRequest.reqType = BILLREQ;
-    sh->fSt.receptionistRequest.reqGroup = id;                      /* (semSharedMemRecptionist) param should be groupid */
+    sh->fSt.receptionistRequest.reqGroup = id;           
     
-    verifySemError(semUp(semgid, sh->receptionistReq), 0, 1);
+    if (semUp (semgid, sh->receptionistReq) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
 
     table = sh->fSt.assignedTable[id];
     // fim insert
@@ -350,7 +382,10 @@ static void checkOutAtReception (int id)
     }
 
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->requestReceived[table]), 1, 1);
+    if (semDown (semgid, sh->tableDone[table]) == -1) {                                                  /* enter critical region */
+        perror ("error on the down operation for semaphore access (CT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     if (semDown (semgid, sh->mutex) == -1) {                                                  /* enter critical region */

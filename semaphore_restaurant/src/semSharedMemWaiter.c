@@ -29,7 +29,6 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
-#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -137,7 +136,8 @@ int main (int argc, char *argv[])
  */
 static request waitForClientOrChef()
 {
-    request req; 
+    request req;
+
     if (semDown (semgid, sh->mutex) == -1)  {                                                  /* enter critical region */
         perror ("error on the up operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
@@ -154,7 +154,10 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->waiterRequest), 1, 2);
+    if (semDown (semgid, sh->waiterRequest) == -1)  {                                                  /* enter critical region */
+        perror ("error on the up operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
 
@@ -175,7 +178,10 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
-    verifySemError(semUp(semgid, sh->waiterRequestPossible), 0, 2);
+    if (semUp (semgid, sh->waiterRequestPossible) == -1) {                                                  /* exit critical region */
+        perror ("error on the down operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 
     return req;
@@ -206,7 +212,11 @@ static void informChef (int n)
 
     sh->fSt.foodGroup = n;
     sh->fSt.foodOrder = 1;
-    verifySemError(semUp(semgid, sh->waitOrder), 0, 2);
+
+    if (semUp (semgid, sh->waitOrder) == -1){                                                /* exit critical region */
+        perror ("error on the down operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
 
     table = sh->fSt.assignedTable[n];
     // fim insert
@@ -219,8 +229,15 @@ static void informChef (int n)
 
     
     // TODO insert your code here
-    verifySemError(semDown(semgid, sh->orderReceived), 1, 2);
-    verifySemError(semUp(semgid, sh->requestReceived[table]), 0, 2);
+    if (semDown (semgid, sh->orderReceived) == -1)  {                                                  /* enter critical region */
+        perror ("error on the up operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
+
+    if (semUp (semgid, sh->requestReceived[table]) == -1){                                                 /* exit critical region */
+        perror ("error on the down operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
 }
 
@@ -234,7 +251,9 @@ static void informChef (int n)
  */
 
 static void takeFoodToTable (int n)
-{
+{   
+    int table;
+
     if (semDown (semgid, sh->mutex) == -1)  {                                                  /* enter critical region */
         perror ("error on the up operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
@@ -243,8 +262,13 @@ static void takeFoodToTable (int n)
     // TODO insert your code here
     sh->fSt.st.waiterStat = TAKE_TO_TABLE;
     saveState(nFic, &sh->fSt);
+
+    table = sh->fSt.assignedTable[n];
    
-    verifySemError(semUp (semgid, sh->foodArrived[sh->fSt.assignedTable[n]]), 0, 2);
+    if (semUp (semgid, sh->foodArrived[table]) == -1)  {                                                  /* exit critical region */
+        perror ("error on the down operation for semaphore access (WT)");
+        exit (EXIT_FAILURE);
+    }
     // fim insert
     
     if (semUp (semgid, sh->mutex) == -1)  {                                                  /* exit critical region */
