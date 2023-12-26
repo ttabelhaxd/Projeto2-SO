@@ -31,6 +31,7 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
+#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
