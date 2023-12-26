@@ -29,6 +29,7 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
+#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -143,6 +144,9 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
+    sh->fSt.st.waiterStat = WAIT_FOR_REQUEST;
+    saveState(nFic, &sh->fSt);
+    // fim insert
     
     if (semUp (semgid, sh->mutex) == -1)      {                                             /* exit critical region */
         perror ("error on the down operation for semaphore access (WT)");
@@ -150,6 +154,9 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
+    verifySemError(semDown(semgid, sh->waiterRequest), 1, 2);
+    // fim insert
+
 
     if (semDown (semgid, sh->mutex) == -1)  {                                                  /* enter critical region */
         perror ("error on the up operation for semaphore access (WT)");
@@ -157,6 +164,10 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
+    req.reqGroup = sh->fSt.waiterRequest.reqGroup;
+    req.reqType = sh->fSt.waiterRequest.reqType;
+    // fim insert
+
 
     if (semUp (semgid, sh->mutex) == -1) {                                                  /* exit critical region */
         perror ("error on the down operation for semaphore access (WT)");
@@ -164,7 +175,9 @@ static request waitForClientOrChef()
     }
 
     // TODO insert your code here
-
+    verifySemError(semUp(semgid, sh->waiterRequestPossible), 0, 2);
+    // fim insert
+    
     return req;
 
 }

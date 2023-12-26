@@ -29,6 +29,7 @@
 #include "sharedDataSync.h"
 #include "semaphore.h"
 #include "sharedMemory.h"
+#include "verifyErrorsSemaphore.h"
 
 /** \brief logging file name */
 static char nFic[51];
@@ -150,6 +151,18 @@ int main (int argc, char *argv[])
 static int decideTableOrWait(int n)
 {
      //TODO insert your code here
+    if(sh->fSt.st.groupStat[n] == ATRECEPTION && sh->fSt.assignedTable[n] == -1){
+        int occupied = 0;
+        for(int num = 0; num < sh->fSt.nGroups; num++)
+            if(sh->fSt.assignedTable[num] != -1)
+                occupied += 1 + sh->fSt.assignedTable[num];
+
+        if(occupied <= 1)
+            return 1;
+        if(occupied == 2)
+            return 0;
+    }
+    // fim insert
 
      return -1;
 }
@@ -164,7 +177,10 @@ static int decideTableOrWait(int n)
  */
 static int decideNextGroup()
 {
-     //TODO insert your code here
+    //TODO insert your code here
+    for(int num = 0; num < sh->fSt.nGroups; num++)
+        if(decideTableOrWait(num) != -1 && groupRecord[num] == WAIT)
+            return num;
 
      return -1;
 }
@@ -188,30 +204,35 @@ static request waitForGroup()
     }
 
     // TODO insert your code here
-    
+    sh->fSt.st.receptionistStat = WAIT_FOR_REQUEST;
+    saveState(nFic, &sh->fSt);
+    // fim insert
+
     if (semUp (semgid, sh->mutex) == -1)      {                                             /* exit critical region */
         perror ("error on the down operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
     }
 
     // TODO insert your code here
-
+    verifySemError(semDown(semgid, sh->receptionistReq), 1, 3);
+    // fim insert
     if (semDown (semgid, sh->mutex) == -1)  {                                                  /* enter critical region */
         perror ("error on the up operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
     }
 
     // TODO insert your code here
+    ret.reqGroup = sh->fSt.receptionistRequest.reqGroup;
+    ret.reqType = sh->fSt.receptionistRequest.reqType;
+    verifySemError(semUp(semgid, sh->receptionistRequestPossible), 0, 3);
+    // fim insert
 
     if (semUp (semgid, sh->mutex) == -1) {                                                  /* exit critical region */
      perror ("error on the down operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
     }
-
     // TODO insert your code here
-
     return ret;
-
 }
 
 /**
@@ -231,6 +252,19 @@ static void provideTableOrWaitingRoom (int n)
     }
 
     // TODO insert your code here
+    sh->fSt.st.receptionistStat = ASSIGNTABLE;
+    saveState(nFic, &sh->fSt);
+
+    if(groupRecord[n] == TOARRIVE){
+        if((sh->fSt.assignedTable[n] = decideTableOrWait(n)) != -1){
+            verifySemError(semUp(semgid, sh->waitForTable[n]), 0, 3);
+            groupRecord[n] = ATTABLE;
+        }else{
+            groupRecord[n] = WAIT;
+            sh->fSt.groupsWaiting++;
+        }
+    }
+    // fim insert
 
     if (semUp (semgid, sh->mutex) == -1) {                                               /* exit critical region */
         perror ("error on the down operation for semaphore access (WT)");
@@ -257,7 +291,30 @@ static void receivePayment (int n)
     }
 
     // TODO insert your code here
+    int table_vacant;
+    int new_table_group;
 
+    sh->fSt.st.receptionistStat = RECVPAY;
+    saveState(nFic, &sh->fSt);
+
+    verifySemError(semUp(semgid, sh->tableDone[table_vacant = sh->fSt.assignedTable[n]]), 0, 3);
+    groupRecord[n] = DONE;
+    sh->fSt.assignedTable[n] = -1;
+
+    if(sh->fSt.groupsWaiting > 0){
+        sh->fSt.st.receptionistStat = ASSIGNTABLE;
+        saveState(nFic, &sh->fSt);
+
+        if((new_table_group = decideNextGroup()) != -1){
+            sh->fSt.assignedTable[new_table_group] = table_vacant;
+            groupRecord[n] = ATTABLE;
+            verifySemError(semUp(semgid, sh->waitForTable[new_table_group]), 0, 3);
+
+            sh->fSt.groupsWaiting--;
+        }
+    }
+    // fim insert
+    
     if (semUp (semgid, sh->mutex) == -1)  {                                                  /* exit critical region */
      perror ("error on the down operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
