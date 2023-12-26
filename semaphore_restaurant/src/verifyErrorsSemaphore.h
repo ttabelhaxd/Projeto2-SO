@@ -21,7 +21,7 @@ void verifySemError(int value, int op, int ent) {
     const char *operations[] = {"up", "down"};
 
     if (op < 0 || op > 1 || ent < 0 || ent > 3) {
-        perror("Error using verifySemError function (check access handle_semaphore_access.h for more information)");
+        perror("Error using verifySemError function (invalid arguments)");
         exit(EXIT_FAILURE);
     }
 
