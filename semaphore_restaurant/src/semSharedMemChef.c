@@ -126,7 +126,7 @@ static void waitForOrder ()
 {
 
     //TODO insert your code here
-    if (semDown (semgid, sh->waitOrder) == -1) {                                                      /* enter critical region */
+    if (semDown (semgid, sh->waitOrder) == -1) {                                                     
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
@@ -149,7 +149,7 @@ static void waitForOrder ()
     }
 
     //TODO insert your code here
-    if (semUp (semgid, sh->orderReceived) == -1) {                                                      /* exit critical region */
+    if (semUp (semgid, sh->orderReceived) == -1) {                                                     
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
@@ -169,7 +169,7 @@ static void processOrder ()
     usleep((unsigned int) floor ((MAXCOOK * random ()) / RAND_MAX + 100.0));
 
     //TODO insert your code here
-    if (semDown (semgid, sh->waiterRequestPossible) == -1) {                                                      /* enter critical region */
+    if (semDown (semgid, sh->waiterRequestPossible) == -1) {                                                      
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }
@@ -194,7 +194,7 @@ static void processOrder ()
     }
 
     //TODO insert your code here
-    if (semUp (semgid, sh->waiterRequest) == -1) {                                                      /* exit critical region */
+    if (semUp (semgid, sh->waiterRequest) == -1) {                                                     
         perror ("error on the up operation for semaphore access (PT)");
         exit (EXIT_FAILURE);
     }

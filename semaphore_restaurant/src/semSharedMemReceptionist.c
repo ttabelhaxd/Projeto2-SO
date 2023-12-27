@@ -322,7 +322,7 @@ static void receivePayment (int n)
         if(new_table_group != -1){
             sh->fSt.assignedTable[new_table_group] = table_vacant;
             groupRecord[new_table_group] = ATTABLE;
-            if (semUp (semgid, sh->waitForTable[new_table_group]) == -1)  {                                                  /* exit critical region */
+            if (semUp (semgid, sh->waitForTable[new_table_group]) == -1)  {                                                  
                 perror ("error on the down operation for semaphore access (WT)");
                 exit (EXIT_FAILURE);
             }
@@ -337,7 +337,7 @@ static void receivePayment (int n)
     }
 
     // TODO insert your code here
-    if (semUp (semgid, sh->tableDone[table_vacant]) == -1)  {                                                  /* exit critical region */
+    if (semUp (semgid, sh->tableDone[table_vacant]) == -1)  {                                                
      perror ("error on the down operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
     }
